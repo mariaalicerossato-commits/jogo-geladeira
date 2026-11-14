@@ -1,0 +1,345 @@
+<title>Escolhas na Geladeira</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;900&display=swap">
+<style>
+  /* Layout: uma coluna estreita de celular; telas trocam no mesmo lugar (início, geladeira, resultado, final). Visual único, bege com azul marinho e verde. */
+  :root {
+    --bege: #F3EAD8;
+    --bege-2: #E8DCC2;
+    --marinho: #14213D;
+    --marinho-2: #2B3A5E;
+    --verde: #2F7A4D;
+    --verde-claro: #DCEBDD;
+    --fonte: "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html, body { min-height: 100%; }
+  body {
+    background: var(--bege);
+    color: var(--marinho);
+    font-family: var(--fonte);
+    font-size: 16px;
+    line-height: 1.4;
+    padding-block: 16px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .app { max-width: 460px; margin: 0 auto; }
+  h1, h2, p { margin: 0; }
+  h1 { font-size: 2rem; font-weight: 900; line-height: 1.1; text-wrap: balance; }
+  h2 { font-size: 1.4rem; font-weight: 900; text-wrap: balance; }
+  .muted { color: var(--marinho-2); }
+  button { font-family: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible { outline: 3px solid var(--verde); outline-offset: 3px; }
+
+  .screen { display: flex; flex-direction: column; gap: 18px; }
+  .eyebrow { font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-size: .75rem; color: var(--verde); }
+
+  .btn {
+    border: 0; border-radius: 14px; padding: 14px 18px;
+    background: var(--marinho); color: var(--bege);
+    font-weight: 900; font-size: 1.05rem; width: 100%;
+  }
+  .btn.verde { background: var(--verde); color: #fff; }
+  .btn.ghost { background: transparent; color: var(--marinho); border: 2px solid var(--marinho); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* início */
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .choice {
+    background: var(--bege-2); border: 3px solid transparent; border-radius: 18px;
+    padding: 12px 8px 14px; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    font-weight: 900; font-size: 1.1rem;
+  }
+  .choice:active, .choice:hover { border-color: var(--marinho); }
+  .choice svg { width: 100%; max-width: 150px; height: auto; }
+
+  /* geladeira */
+  .topo { display: flex; align-items: center; gap: 12px; }
+  .topo svg { width: 64px; height: auto; flex: none; background: var(--bege-2); border-radius: 50%; }
+  .topo p { font-weight: 700; }
+  .prato {
+    background: #FBF6EA; border: 3px solid var(--marinho); border-radius: 18px;
+    padding: 12px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .prato-label { display: flex; justify-content: space-between; font-weight: 900; }
+  .slots { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .slot {
+    aspect-ratio: 1; border-radius: 50%; border: 2px dashed var(--marinho-2);
+    display: grid; place-items: center; font-size: 1.6rem; background: var(--bege);
+  }
+  .slot.cheio { border-style: solid; background: #fff; }
+  .dica { min-height: 1.4em; font-size: .9rem; font-weight: 700; color: var(--verde); }
+
+  .geladeira {
+    background: var(--verde-claro); border: 4px solid var(--marinho); border-radius: 22px;
+    padding: 14px 12px; position: relative;
+  }
+  .geladeira::before {
+    content: ""; position: absolute; right: 14px; top: 18px; bottom: 18px; width: 6px;
+    border-radius: 3px; background: var(--marinho); opacity: .0;
+  }
+  .prateleiras { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px 8px; }
+  .food {
+    background: #fff; border: 2px solid var(--marinho); border-radius: 14px;
+    padding: 8px 2px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px;
+    min-width: 0; position: relative; box-shadow: 0 3px 0 var(--marinho);
+  }
+  .food .e { font-size: 1.9rem; line-height: 1.1; }
+  .food .n { font-size: .68rem; font-weight: 700; text-align: center; overflow-wrap: anywhere; }
+  .food[aria-pressed="true"] { background: var(--verde); color: #fff; transform: translateY(3px); box-shadow: none; }
+  .food[aria-pressed="true"]::after {
+    content: "✓"; position: absolute; top: -8px; right: -6px; width: 20px; height: 20px;
+    border-radius: 50%; background: var(--marinho); color: #fff; font-size: .8rem;
+    display: grid; place-items: center; font-weight: 900;
+  }
+  .barra {
+    position: sticky; bottom: 0;
+    padding-top: 10px; padding-bottom: max(6px, env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(to bottom, transparent, var(--bege) 30%);
+  }
+
+  /* resultado */
+  .res-card { border-radius: 22px; padding: 18px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+  .res-card.ganhou { background: var(--verde); color: #fff; }
+  .res-card.perdeu { background: var(--marinho); color: var(--bege); }
+  .res-card svg { width: 120px; height: auto; background: var(--bege); border-radius: 50%; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    display: flex; align-items: center; gap: 6px; border-radius: 999px; padding: 6px 12px 6px 8px;
+    font-weight: 700; font-size: .9rem; border: 2px solid var(--marinho);
+  }
+  .chip.s { background: var(--verde-claro); border-color: var(--verde); }
+  .chip.u { background: var(--marinho); color: var(--bege); }
+  .placar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .placar div { background: var(--bege-2); border-radius: 14px; padding: 10px; text-align: center; }
+  .placar b { display: block; font-size: 1.8rem; line-height: 1; }
+  .legenda { font-size: .85rem; font-weight: 700; }
+
+  /* final */
+  .fim { background: var(--marinho); color: var(--bege); border-radius: 24px; padding: 26px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .fim svg { width: 130px; height: auto; background: var(--bege); border-radius: 50%; }
+  .fim p { font-size: 1.35rem; font-weight: 900; line-height: 1.3; text-wrap: balance; }
+  .fim .btn { background: var(--bege); color: var(--marinho); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .food { transition: transform .08s, box-shadow .08s, background .15s; }
+    .screen { animation: entra .25s ease-out; }
+    @keyframes entra { from { opacity: .0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  }
+</style>
+
+<main class="app">
+  <section class="screen" id="s-start">
+    <div>
+      <p class="eyebrow">Jogo educativo</p>
+      <h1>Escolhas na Geladeira</h1>
+    </div>
+    <p class="muted">Abra a geladeira e monte o prato do dia. Os alimentos que você escolher vão fazer parte do estilo de vida do seu personagem.</p>
+    <h2>Quem vai jogar?</h2>
+    <div class="choices">
+      <button class="choice" id="b-menina" type="button" aria-label="Jogar como menina"><span id="av-menina"></span>Menina</button>
+      <button class="choice" id="b-menino" type="button" aria-label="Jogar como menino"><span id="av-menino"></span>Menino</button>
+    </div>
+  </section>
+
+  <section class="screen" id="s-fridge" hidden>
+    <div class="topo">
+      <span id="av-topo"></span>
+      <p>Escolha 5 alimentos da geladeira para o prato.</p>
+    </div>
+    <div class="prato">
+      <div class="prato-label"><span>Seu prato</span><span id="contador">0 de 5</span></div>
+      <div class="slots" id="slots"></div>
+      <p class="dica" id="dica" aria-live="polite"></p>
+    </div>
+    <div class="geladeira"><div class="prateleiras" id="geladeira"></div></div>
+    <div class="barra"><button class="btn verde" id="b-servir" type="button" disabled>Servir o prato</button></div>
+  </section>
+
+  <section class="screen" id="s-result" hidden>
+    <div class="res-card" id="res-card">
+      <span id="av-res"></span>
+      <h2 id="res-titulo"></h2>
+      <p id="res-texto"></p>
+    </div>
+    <div class="placar">
+      <div><b id="n-saud">0</b><span class="legenda">saudáveis</span></div>
+      <div><b id="n-ultra">0</b><span class="legenda">ultraprocessados</span></div>
+    </div>
+    <div class="chips" id="res-chips"></div>
+    <p class="muted" id="res-dica"></p>
+    <button class="btn" id="b-fim" type="button">Finalizar</button>
+  </section>
+
+  <section class="screen" id="s-end" hidden>
+    <div class="fim">
+      <span id="av-fim"></span>
+      <p>Maria Alice Rossato agradece por participar da defesa do TCC dela no dia 18 de novembro de 2026!</p>
+      <button class="btn" id="b-again" type="button">Jogar de novo</button>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+  var N = 5;
+  var FOODS = [
+    { e: "🍎", n: "Maçã", s: true }, { e: "🍌", n: "Banana", s: true },
+    { e: "🥦", n: "Brócolis", s: true }, { e: "🥕", n: "Cenoura", s: true },
+    { e: "🐟", n: "Peixe", s: true }, { e: "🍗", n: "Frango", s: true },
+    { e: "🌾", n: "Grãos", s: true }, { e: "🥬", n: "Folhas verdes", s: true },
+    { e: "🍔", n: "Hambúrguer", s: false }, { e: "🍦", n: "Sorvete", s: false },
+    { e: "🍬", n: "Balas coloridas", s: false }, { e: "🍫", n: "Chocolate com corante", s: false },
+    { e: "🥤", n: "Refrigerante", s: false }, { e: "🍟", n: "Batata frita", s: false },
+    { e: "🍩", n: "Donut", s: false }, { e: "🌭", n: "Salsicha", s: false }
+  ];
+
+  function $(id) { return document.getElementById(id); }
+
+  /* Personagens em SVG, com humor (feliz, neutro, triste) */
+  function avatar(tipo, humor) {
+    var boca = humor === "feliz" ? "M49 79 Q60 91 71 79"
+             : humor === "triste" ? "M51 86 Q60 77 69 86"
+             : "M52 82 Q60 87 68 82";
+    var sobr = humor === "triste" ? 'M41 52 L54 55 M79 52 L66 55' : 'M41 54 Q48 50 54 54 M66 54 Q72 50 79 54';
+    var menina = tipo === "menina";
+    var pele = menina ? "#F7D9C4" : "#8D5A3B";
+    var camisa = menina ? "#2F7A4D" : "#14213D";
+    var iris = menina ? "#3E9B5E" : "#5A3A22";
+    var cabelo = menina ? "#6B4423" : "#241610";
+    var s = '<svg viewBox="0 0 120 140" role="img" aria-label="' + (menina ? "Menina" : "Menino") + '" xmlns="http://www.w3.org/2000/svg">';
+    s += '<path d="M14 140 Q14 106 60 102 Q106 106 106 140 Z" fill="' + camisa + '"/>';
+    if (menina) {
+      s += '<path d="M28 62 Q24 18 60 16 Q96 18 92 62 L98 122 Q80 128 76 112 L44 112 Q40 128 22 122 Z" fill="' + cabelo + '"/>';
+    } else {
+      [[34,52,10],[42,35,11],[56,29,11],[70,29,11],[82,35,11],[88,52,10],[60,42,16]].forEach(function (c) {
+        s += '<circle cx="' + c[0] + '" cy="' + c[1] + '" r="' + c[2] + '" fill="' + cabelo + '"/>';
+      });
+    }
+    s += '<rect x="52" y="86" width="16" height="22" rx="6" fill="' + pele + '"/>';
+    if (!menina) s += '<ellipse cx="31" cy="66" rx="4" ry="7" fill="' + pele + '"/><ellipse cx="89" cy="66" rx="4" ry="7" fill="' + pele + '"/>';
+    s += '<ellipse cx="60" cy="62" rx="28" ry="32" fill="' + pele + '"/>';
+    if (menina) {
+      s += '<path d="M31 58 Q30 22 60 20 Q90 22 89 58 Q76 38 60 41 Q44 38 31 58 Z" fill="' + cabelo + '"/>';
+    } else {
+      [[46,41,8],[60,37,9],[74,41,8]].forEach(function (c) {
+        s += '<circle cx="' + c[0] + '" cy="' + c[1] + '" r="' + c[2] + '" fill="' + cabelo + '"/>';
+      });
+    }
+    s += '<path d="' + sobr + '" stroke="' + cabelo + '" stroke-width="2.4" fill="none" stroke-linecap="round"/>';
+    [48, 72].forEach(function (x) {
+      s += '<ellipse cx="' + x + '" cy="65" rx="5.5" ry="5" fill="#fff"/><circle cx="' + x + '" cy="65" r="3.4" fill="' + iris + '"/><circle cx="' + x + '" cy="65" r="1.5" fill="#111"/>';
+    });
+    if (!menina) {
+      s += '<circle cx="48" cy="65" r="10" fill="none" stroke="#14213D" stroke-width="2.6"/><circle cx="72" cy="65" r="10" fill="none" stroke="#14213D" stroke-width="2.6"/><path d="M58 65 L62 65" stroke="#14213D" stroke-width="2.6"/>';
+    }
+    s += '<circle cx="42" cy="76" r="4" fill="#E58E8E" opacity=".35"/><circle cx="78" cy="76" r="4" fill="#E58E8E" opacity=".35"/>';
+    s += '<path d="' + boca + '" stroke="#7A2E2E" stroke-width="2.6" fill="none" stroke-linecap="round"/>';
+    return s + '</svg>';
+  }
+
+  var tipo = null, comidas = [], escolhidos = [];
+
+  function show(id) {
+    ["s-start", "s-fridge", "s-result", "s-end"].forEach(function (s) { $(s).hidden = s !== id; });
+    window.scrollTo(0, 0);
+  }
+
+  function embaralhar(a) {
+    a = a.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function novaRodada() {
+    comidas = embaralhar(FOODS);
+    escolhidos = [];
+    $("av-topo").innerHTML = avatar(tipo, "neutro");
+    var g = $("geladeira");
+    g.innerHTML = comidas.map(function (f, i) {
+      return '<button type="button" class="food" data-i="' + i + '" aria-pressed="false" aria-label="' + f.n + '"><span class="e" aria-hidden="true">' + f.e + '</span><span class="n">' + f.n + '</span></button>';
+    }).join("");
+    atualizar("");
+    show("s-fridge");
+  }
+
+  function atualizar(msg) {
+    var botoes = $("geladeira").querySelectorAll(".food");
+    for (var k = 0; k < botoes.length; k++) {
+      botoes[k].setAttribute("aria-pressed", escolhidos.indexOf(k) >= 0 ? "true" : "false");
+    }
+    var html = "";
+    for (var i = 0; i < N; i++) {
+      var f = comidas[escolhidos[i]];
+      html += '<div class="slot' + (f ? " cheio" : "") + '">' + (f ? f.e : "") + '</div>';
+    }
+    $("slots").innerHTML = html;
+    $("contador").textContent = escolhidos.length + " de " + N;
+    $("b-servir").disabled = escolhidos.length !== N;
+    $("dica").textContent = msg || (escolhidos.length === N ? "Prato completo! Toque em servir." : "");
+  }
+
+  $("geladeira").addEventListener("click", function (ev) {
+    var b = ev.target.closest(".food");
+    if (!b) return;
+    var i = Number(b.getAttribute("data-i"));
+    var pos = escolhidos.indexOf(i);
+    if (pos >= 0) { escolhidos.splice(pos, 1); atualizar(""); return; }
+    if (escolhidos.length >= N) { atualizar("O prato já tem 5 itens. Toque em um deles para trocar."); return; }
+    escolhidos.push(i);
+    atualizar("");
+  });
+
+  $("b-servir").addEventListener("click", function () {
+    var itens = escolhidos.map(function (i) { return comidas[i]; });
+    var saud = itens.filter(function (f) { return f.s; }).length;
+    var ultra = N - saud;
+    var pct = Math.round(ultra / N * 100);
+    var ganhou = saud > ultra || pct <= 20;
+    var titulo, texto, dica;
+    if (ultra === 0) {
+      titulo = "Você ganhou!";
+      texto = "Prato 100% saudável. Nenhum ultraprocessado.";
+      dica = "Frutas, vegetais, grãos, peixe e frango são alimentos in natura ou minimamente processados.";
+    } else if (pct <= 20) {
+      titulo = "Você ganhou!";
+      texto = "Só " + pct + "% do prato é ultraprocessado. Ainda é considerado um prato saudável.";
+      dica = "Um pouco de ultraprocessado de vez em quando cabe, desde que a base do prato seja natural.";
+    } else if (ganhou) {
+      titulo = "Você ganhou!";
+      texto = "O prato tem mais alimentos saudáveis do que ultraprocessados.";
+      dica = "Atenção: com " + pct + "% de ultraprocessados, o prato já se afasta do ideal. Dá para melhorar.";
+    } else {
+      titulo = "Você perdeu!";
+      texto = "O prato tem mais ultraprocessados do que alimentos saudáveis.";
+      dica = "Tente trocar os ultraprocessados por frutas, vegetais, grãos, peixe ou frango.";
+    }
+    $("res-card").className = "res-card " + (ganhou ? "ganhou" : "perdeu");
+    $("av-res").innerHTML = avatar(tipo, ganhou ? "feliz" : "triste");
+    $("res-titulo").textContent = titulo;
+    $("res-texto").textContent = texto;
+    $("res-dica").textContent = dica;
+    $("n-saud").textContent = saud;
+    $("n-ultra").textContent = ultra;
+    $("res-chips").innerHTML = itens.map(function (f) {
+      return '<span class="chip ' + (f.s ? "s" : "u") + '"><span aria-hidden="true">' + f.e + '</span>' + f.n + '</span>';
+    }).join("");
+    show("s-result");
+  });
+
+  $("b-fim").addEventListener("click", function () {
+    $("av-fim").innerHTML = avatar(tipo, "feliz");
+    show("s-end");
+  });
+  $("b-again").addEventListener("click", function () { tipo = null; show("s-start"); });
+
+  $("av-menina").innerHTML = avatar("menina", "feliz");
+  $("av-menino").innerHTML = avatar("menino", "feliz");
+  $("b-menina").addEventListener("click", function () { tipo = "menina"; novaRodada(); });
+  $("b-menino").addEventListener("click", function () { tipo = "menino"; novaRodada(); });
+})();
+</script>
